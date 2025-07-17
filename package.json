@@ -5,11 +5,9 @@
   "main": "index.js",
   "scripts": {
     "lint": "eslint . --ext .js",
-    "test": "NODE_ENV=test jest --ci --verbose --detectOpenHandles",
+    "test": "NODE_ENV=test jest --verbose --detectOpenHandles",
     "test:watch": "NODE_ENV=test jest --watch",
-    "test:coverage": "NODE_ENV=test jest --coverage --ci --verbose --detectOpenHandles",
-    "test:report": "NODE_ENV=test jest --coverage --ci --verbose --detectOpenHandles --reporters=default --reporters=jest-junit",
-    "test:integration": "NODE_ENV=test jest --config=jest.integration.config.js --ci --verbose --detectOpenHandles",
+    "test:coverage": "NODE_ENV=test jest --coverage --verbose --detectOpenHandles",
     "start:dev": "NODE_ENV=dev nodemon index.js",
     "start:test": "NODE_ENV=test node index.js",
     "start:prod": "NODE_ENV=prod node index.js"
@@ -34,31 +32,18 @@
   },
   "jest": {
     "testEnvironment": "node",
-    "globalTeardown": "./tests/teardown.js",
     "collectCoverage": false,
     "coverageDirectory": "coverage",
-    "testPathIgnorePatterns": [
-      "/node_modules/",
-      "/tests/integration/"
-    ],
-    "coverageReporters": [
-      "text",
-      "lcov",
-      "html"
-    ],
-    "testResultsProcessor": "jest-junit",
     "reporters": [
       "default",
-      "jest-junit"
+      ["jest-junit", {
+        "outputDirectory": "test-results",
+        "outputName": "junit.xml",
+        "classNameTemplate": "{classname}",
+        "titleTemplate": "{title}",
+        "ancestorSeparator": " › ",
+        "usePathForSuiteName": true
+      }]
     ]
-  },
-  "jest-junit": {
-    "outputDirectory": "test-results",
-    "outputName": "test-results.xml",
-    "uniqueOutputName": "false",
-    "classNameTemplate": "{classname}",
-    "titleTemplate": "{title}",
-    "ancestorSeparator": " › ",
-    "usePathForSuiteName": "true"
   }
 }

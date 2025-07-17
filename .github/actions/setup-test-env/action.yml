@@ -1,0 +1,110 @@
+name: 'Setup Test Environment'
+description: 'Sets up Node.js, installs dependencies, and configures test environment for the blog service'
+
+inputs:
+  node-version:
+    description: 'Node.js version to use'
+    required: false
+    default: '20.x'
+  cache-dependency-path:
+    description: 'Path to dependency file for caching'
+    required: false
+    default: 'package-lock.json'
+  install-dependencies:
+    description: 'Whether to install npm dependencies'
+    required: false
+    default: 'true'
+  setup-mongodb:
+    description: 'Whether to wait for MongoDB to be ready'
+    required: false
+    default: 'true'
+  mongodb-url:
+    description: 'MongoDB connection URL'
+    required: false
+    default: 'mongodb://localhost:27017'
+  test-database:
+    description: 'Test database name'
+    required: false
+    default: 'blogservice-test'
+
+outputs:
+  node-version:
+    description: 'The Node.js version that was set up'
+    value: ${{ steps.setup-node.outputs.node-version }}
+  cache-hit:
+    description: 'Whether npm cache was hit'
+    value: ${{ steps.setup-node.outputs.cache-hit }}
+  mongodb-ready:
+    description: 'Whether MongoDB is ready for connections'
+    value: ${{ steps.wait-mongodb.outputs.ready }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Node.js
+      id: setup-node
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: 'npm'
+        cache-dependency-path: ${{ inputs.cache-dependency-path }}
+
+    - name: Install dependencies
+      if: inputs.install-dependencies == 'true'
+      shell: bash
+      run: |
+        echo "Installing npm dependencies..."
+        npm ci
+        echo "Dependencies installed successfully"
+
+    - name: Setup test environment variables
+      shell: bash
+      run: |
+        echo "NODE_ENV=test" >> $GITHUB_ENV
+        echo "TEST_MONGO_URL=${{ inputs.mongodb-url }}/${{ inputs.test-database }}" >> $GITHUB_ENV
+        echo "SECRET_KEY=test-secret-key-for-github-actions" >> $GITHUB_ENV
+        echo "PORT=3003" >> $GITHUB_ENV
+        echo "Test environment variables configured"
+
+    - name: Wait for MongoDB
+      id: wait-mongodb
+      if: inputs.setup-mongodb == 'true'
+      shell: bash
+      run: |
+        echo "Waiting for MongoDB to be ready..."
+        max_attempts=30
+        attempt=0
+        
+        while [ $attempt -lt $max_attempts ]; do
+          if mongosh ${{ inputs.mongodb-url }}/test --eval "db.runCommand({ping: 1})" --quiet > /dev/null 2>&1; then
+            echo "MongoDB is ready!"
+            echo "ready=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          echo "Attempt $((attempt + 1))/$max_attempts: MongoDB not ready yet, waiting..."
+          sleep 2
+          attempt=$((attempt + 1))
+        done
+        
+        echo "MongoDB failed to become ready after $max_attempts attempts"
+        echo "ready=false" >> $GITHUB_OUTPUT
+        exit 1
+
+    - name: Verify test environment
+      shell: bash
+      run: |
+        echo "=== Test Environment Summary ==="
+        echo "Node.js version: $(node --version)"
+        echo "npm version: $(npm --version)"
+        echo "NODE_ENV: $NODE_ENV"
+        echo "TEST_MONGO_URL: $TEST_MONGO_URL"
+        echo "PORT: $PORT"
+        echo "Working directory: $(pwd)"
+        echo "Package.json exists: $(test -f package.json && echo "Yes" || echo "No")"
+        echo "node_modules exists: $(test -d node_modules && echo "Yes" || echo "No")"
+        
+        if [ "${{ inputs.setup-mongodb }}" == "true" ]; then
+          echo "MongoDB connection test:"
+          mongosh ${{ inputs.mongodb-url }}/test --eval "db.runCommand({ping: 1})" --quiet && echo "✓ MongoDB accessible" || echo "✗ MongoDB not accessible"
+        fi

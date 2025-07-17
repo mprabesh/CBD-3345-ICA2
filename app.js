@@ -31,9 +31,6 @@ if (process.env.NODE_ENV === "test") {
   app.use("/api/testing", testingRouter);
 }
 app.get("/",(req,res)=>{res.send("Server is running")});
-app.get("/api/ping", (req, res) => {
-  res.json({ message: "pong" });
-});
 app.use("/api/login", loginController);
 app.use("/api/users", userController);
 app.use("/api/blogs", blogsController);
