@@ -71,7 +71,7 @@ runs:
 
     - name: Upload test results
       if: always() && inputs.skip-tests != 'true'
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: test-results
         path: |
@@ -81,7 +81,7 @@ runs:
 
     - name: Upload coverage reports
       if: inputs.coverage == 'true' && inputs.skip-tests != 'true'
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: coverage-report
         path: coverage/
