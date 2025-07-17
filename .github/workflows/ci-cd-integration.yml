@@ -6,6 +6,12 @@ on:
   pull_request:
     branches: [ main ]
 
+permissions:
+  contents: read
+  actions: read
+  checks: write
+  packages: write
+
 env:
   NODE_VERSION: '18'
   SECRET_KEY: 'test-secret-key'
