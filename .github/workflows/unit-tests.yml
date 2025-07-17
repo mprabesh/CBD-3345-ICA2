@@ -13,17 +13,6 @@ jobs:
     strategy:
       matrix:
         node-version: [18.x, 20.x]
-    
-    services:
-      mongodb:
-        image: mongo:7
-        ports:
-          - 27017:27017
-        options: >-
-          --health-cmd "mongosh --eval 'db.runCommand({ping: 1})'"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
 
     steps:
     - name: Checkout code
@@ -34,18 +23,11 @@ jobs:
       uses: ./.github/actions/setup-test-env
       with:
         node-version: ${{ matrix.node-version }}
-        setup-mongodb: 'true'
-        mongodb-url: 'mongodb://localhost:27017'
+        setup-mongodb: 'false'
 
     - name: Run unit tests with coverage
       run: |
-        npm test -- --coverage --ci --watchAll=false --testResultsProcessor=jest-junit
-
-    - name: Generate test report
-      if: always()
-      run: |
-        mkdir -p test-results
-        npm test -- --coverage --ci --watchAll=false --reporters=default --reporters=jest-junit --outputFile=test-results/junit.xml
+        npm run test:coverage -- --ci --watchAll=false
 
     - name: Upload test results
       if: always()
