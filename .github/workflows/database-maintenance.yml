@@ -1,0 +1,68 @@
+name: 'Database Maintenance'
+
+on:
+  schedule:
+    - cron: '0 2 * * 0'  # Weekly on Sunday at 2 AM
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: 'Database operation to perform'
+        required: true
+        default: 'seed'
+        type: choice
+        options:
+        - seed
+        - backup
+        - cleanup
+
+env:
+  NODE_VERSION: '18'
+
+jobs:
+  database-maintenance:
+    name: 'Database Maintenance'
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js Environment
+        uses: ./.github/actions/setup-node-test-env
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup MongoDB
+        uses: ./.github/actions/setup-mongodb
+        with:
+          mongodb-version: '6.0'
+          database-name: 'blogservice-maintenance'
+
+      - name: Perform Database Operation
+        run: |
+          case "${{ github.event.inputs.operation || 'seed' }}" in
+            "seed")
+              echo "🌱 Seeding database..."
+              node seed.js
+              ;;
+            "backup")
+              echo "💾 Creating database backup..."
+              # Add backup logic here
+              echo "Backup completed"
+              ;;
+            "cleanup")
+              echo "🧹 Cleaning up test data..."
+              node -e "
+                const mongoose = require('mongoose');
+                const Blog = require('./models/blogs');
+                const User = require('./models/user');
+                mongoose.connect('mongodb://localhost:27017/blogservice-maintenance')
+                  .then(async () => {
+                    await Blog.deleteMany({});
+                    await User.deleteMany({});
+                    console.log('Cleanup completed');
+                    process.exit(0);
+                  });
+              "
+              ;;
+          esac

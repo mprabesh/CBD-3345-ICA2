@@ -1,0 +1,88 @@
+name: 'Lint and Test'
+description: 'Runs ESLint and Jest tests for the blog service'
+inputs:
+  skip-lint:
+    description: 'Whether to skip linting'
+    required: false
+    default: 'false'
+  skip-tests:
+    description: 'Whether to skip tests'
+    required: false
+    default: 'false'
+  test-timeout:
+    description: 'Test timeout in milliseconds'
+    required: false
+    default: '10000'
+  coverage:
+    description: 'Whether to generate coverage report'
+    required: false
+    default: 'true'
+outputs:
+  lint-result:
+    description: 'Linting result status'
+    value: ${{ steps.lint.outcome }}
+  test-result:
+    description: 'Test result status'
+    value: ${{ steps.test.outcome }}
+runs:
+  using: 'composite'
+  steps:
+    - name: Run ESLint
+      id: lint
+      if: inputs.skip-lint != 'true'
+      shell: bash
+      run: |
+        echo "Running ESLint..."
+        npm run lint
+        echo "Linting completed successfully!"
+
+    - name: Run Jest Tests
+      id: test
+      if: inputs.skip-tests != 'true'
+      shell: bash
+      run: |
+        echo "Running Jest tests..."
+        # Create test results directory
+        mkdir -p test-results
+        
+        # Run tests with JUnit reporter and coverage
+        if [ "${{ inputs.coverage }}" == "true" ]; then
+          npm test -- \
+            --coverage \
+            --testTimeout=${{ inputs.test-timeout }} \
+            --reporters=default \
+            --reporters=jest-junit \
+            --coverageReporters=text \
+            --coverageReporters=lcov \
+            --coverageReporters=html \
+            --coverageDirectory=coverage \
+            --testResultsProcessor=jest-junit
+        else
+          npm test -- \
+            --testTimeout=${{ inputs.test-timeout }} \
+            --reporters=default \
+            --reporters=jest-junit \
+            --testResultsProcessor=jest-junit
+        fi
+        echo "Tests completed successfully!"
+      env:
+        JEST_JUNIT_OUTPUT_DIR: test-results
+        JEST_JUNIT_OUTPUT_NAME: test-results.xml
+
+    - name: Upload test results
+      if: always() && inputs.skip-tests != 'true'
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-results
+        path: |
+          test-results/
+          junit.xml
+        retention-days: 30
+
+    - name: Upload coverage reports
+      if: inputs.coverage == 'true' && inputs.skip-tests != 'true'
+      uses: actions/upload-artifact@v3
+      with:
+        name: coverage-report
+        path: coverage/
+        retention-days: 30
