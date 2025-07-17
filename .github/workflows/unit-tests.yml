@@ -1,3 +1,33 @@
+# =============================================================================
+# GITHUB ACTIONS REQUIREMENT 1: UNIT TESTS WITH ARTIFACTS (45 minutes)
+# =============================================================================
+# 
+# This workflow fulfills the first core requirement:
+# "Set up a GitHub Actions workflow that runs unit tests on their application 
+# and stores the test reports as an Artifact. They should navigate to the 
+# 'Actions' tab of their repository to ensure that the test report is 
+# successfully stored."
+#
+# KEY FEATURES:
+# ✅ Runs unit tests automatically on push/PR to main/develop branches
+# ✅ Stores test reports as artifacts (test-results/ and coverage/)
+# ✅ Uses matrix strategy to test multiple Node.js versions (18.x, 20.x)
+# ✅ Utilizes custom action (./.github/actions/setup-test-env) for reusable setup
+# ✅ Generates JUnit XML reports for better CI integration
+# ✅ Uploads coverage to Codecov and comments on PRs
+# ✅ Artifacts are retained for 30 days and can be viewed in Actions tab
+# 
+# ARTIFACTS CREATED:
+# - test-results/junit.xml (JUnit XML format for test results)
+# - coverage/ (HTML and LCOV coverage reports)
+# 
+# TO VIEW ARTIFACTS:
+# 1. Go to repository Actions tab
+# 2. Click on any workflow run
+# 3. Scroll down to "Artifacts" section
+# 4. Download "test-results-node-{version}" zip files
+# =============================================================================
+
 name: Unit Tests and Coverage
 
 on:
@@ -10,35 +40,43 @@ jobs:
   test:
     runs-on: ubuntu-latest
     
+    # Matrix strategy to test multiple Node.js versions for better compatibility
     strategy:
       matrix:
         node-version: [18.x, 20.x]
 
     steps:
+    # Step 1: Get the source code
     - name: Checkout code
       uses: actions/checkout@v4
 
+    # Step 2: Use our CUSTOM ACTION for environment setup
+    # This demonstrates REQUIREMENT 3: Custom Actions
     - name: Setup test environment
       id: setup-env
-      uses: ./.github/actions/setup-test-env
+      uses: ./.github/actions/setup-test-env  # 👈 CUSTOM ACTION USAGE
       with:
         node-version: ${{ matrix.node-version }}
-        setup-mongodb: 'false'
+        setup-mongodb: 'false'  # Simple setup - no database needed
 
+    # Step 3: Run unit tests and generate coverage reports
     - name: Run unit tests with coverage
       run: |
         npm run test:coverage -- --ci --watchAll=false
 
+    # Step 4: UPLOAD ARTIFACTS (REQUIREMENT 1) 
+    # This is the key step that stores test reports as artifacts
     - name: Upload test results
-      if: always()
-      uses: actions/upload-artifact@v4
+      if: always()  # Always upload, even if tests fail
+      uses: actions/upload-artifact@v4  # 👈 ARTIFACT UPLOAD
       with:
         name: test-results-node-${{ matrix.node-version }}
         path: |
-          test-results/
-          coverage/
-        retention-days: 30
+          test-results/    # 👈 JUnit XML test reports
+          coverage/        # 👈 Coverage reports (HTML + LCOV)
+        retention-days: 30  # Keep artifacts for 30 days
 
+    # Step 5: Additional coverage integration (optional enhancement)
     - name: Upload coverage reports to Codecov
       if: matrix.node-version == '20.x'
       uses: codecov/codecov-action@v3
@@ -47,6 +85,7 @@ jobs:
         flags: unittests
         name: codecov-umbrella
 
+    # Step 6: PR coverage comments (optional enhancement)
     - name: Comment coverage on PR
       if: github.event_name == 'pull_request' && matrix.node-version == '20.x'
       uses: romeovs/lcov-reporter-action@v0.3.1

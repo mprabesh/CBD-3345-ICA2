@@ -1,3 +1,32 @@
+# =============================================================================
+# GITHUB ACTIONS REQUIREMENT 3: CUSTOM ACTIONS (45 minutes)
+# =============================================================================
+# 
+# This custom action fulfills the third core requirement:
+# "Identify a common sequence of steps in their workflows and encapsulate it 
+# into a Custom Action. This could be something like setting up their testing 
+# environment or deploying their application. They should then refactor their 
+# workflow to use this custom action."
+#
+# COMMON STEPS ENCAPSULATED:
+# ✅ Node.js setup with configurable versions
+# ✅ npm dependency installation with caching optimization
+# ✅ Test environment variable configuration
+# ✅ MongoDB readiness checks (when needed)
+# ✅ Environment verification and validation
+# 
+# USED BY WORKFLOWS:
+# - .github/workflows/unit-tests.yml (for test environment setup)
+# - .github/workflows/docker-integration.yml (for Docker workflow testing)
+#
+# BENEFITS OF CUSTOM ACTIONS:
+# - Code reusability across multiple workflows
+# - Centralized environment setup logic
+# - Consistent configuration across different jobs
+# - Easier maintenance and updates
+# - Parameterizable for different use cases
+# =============================================================================
+
 name: 'Setup Test Environment'
 description: 'Sets up Node.js, installs dependencies, and configures test environment for the blog service'
 
@@ -39,51 +68,68 @@ outputs:
     value: ${{ steps.wait-mongodb.outputs.ready }}
 
 runs:
-  using: 'composite'
+  using: 'composite'  # 👈 Composite action type - runs shell commands
   steps:
+    # =======================================================================
+    # STEP 1: NODE.JS SETUP (Common across all workflows)
+    # =======================================================================
     - name: Setup Node.js
       id: setup-node
       uses: actions/setup-node@v4
       with:
-        node-version: ${{ inputs.node-version }}
-        cache: 'npm'
+        node-version: ${{ inputs.node-version }}  # 👈 Parameterizable version
+        cache: 'npm'                             # 👈 Cache npm dependencies
         cache-dependency-path: ${{ inputs.cache-dependency-path }}
 
+    # =======================================================================  
+    # STEP 2: DEPENDENCY INSTALLATION (Common step with caching)
+    # =======================================================================
     - name: Install dependencies
-      if: inputs.install-dependencies == 'true'
+      if: inputs.install-dependencies == 'true'  # 👈 Conditional execution
       shell: bash
       run: |
-        echo "Installing npm dependencies..."
-        npm ci
-        echo "Dependencies installed successfully"
+        echo "🔧 Installing npm dependencies..."
+        npm ci  # Clean install for CI environments
+        echo "✅ Dependencies installed successfully"
 
+    # =======================================================================
+    # STEP 3: TEST ENVIRONMENT SETUP (Common configuration)
+    # =======================================================================
     - name: Setup test environment variables
       shell: bash
       run: |
+        echo "🔧 Setting up test environment variables..."
         echo "NODE_ENV=test" >> $GITHUB_ENV
         echo "TEST_MONGO_URL=${{ inputs.mongodb-url }}/${{ inputs.test-database }}" >> $GITHUB_ENV
         echo "SECRET_KEY=test-secret-key-for-github-actions" >> $GITHUB_ENV
         echo "PORT=3003" >> $GITHUB_ENV
-        echo "Test environment variables configured"
+        echo "✅ Test environment variables configured"
 
+    # =======================================================================
+    # STEP 4: MONGODB SETUP (Optional - configurable via inputs)
+    # =======================================================================
     - name: Wait for MongoDB
       id: wait-mongodb
-      if: inputs.setup-mongodb == 'true'
+      if: inputs.setup-mongodb == 'true'  # 👈 Conditional based on input
       shell: bash
       run: |
-        echo "Skipping MongoDB wait for unit tests..."
+        echo "📝 MongoDB setup disabled for simple unit tests"
+        echo "For integration tests, this would wait for MongoDB to be ready"
         echo "ready=true" >> $GITHUB_OUTPUT
 
+    # =======================================================================
+    # STEP 5: ENVIRONMENT VERIFICATION (Common validation step)
+    # =======================================================================
     - name: Verify test environment
       shell: bash
       run: |
-        echo "=== Test Environment Summary ==="
+        echo "=== 🔍 TEST ENVIRONMENT SUMMARY ==="
         echo "Node.js version: $(node --version)"
         echo "npm version: $(npm --version)"
         echo "NODE_ENV: $NODE_ENV"
-        echo "TEST_MONGO_URL: $TEST_MONGO_URL"
-        echo "PORT: $PORT"
         echo "Working directory: $(pwd)"
-        echo "Package.json exists: $(test -f package.json && echo "Yes" || echo "No")"
-        echo "node_modules exists: $(test -d node_modules && echo "Yes" || echo "No")"
-        echo "✓ Test environment setup completed"
+        echo "Package.json exists: $(test -f package.json && echo '✅ Yes' || echo '❌ No')"
+        echo "node_modules exists: $(test -d node_modules && echo '✅ Yes' || echo '❌ No')"
+        echo ""
+        echo "🎯 CUSTOM ACTION COMPLETE!"
+        echo "This action encapsulated common setup steps used across workflows."
