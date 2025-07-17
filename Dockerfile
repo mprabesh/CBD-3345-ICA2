@@ -13,18 +13,11 @@ RUN npm install
 # Copy the rest of your application code
 COPY . .
 
-# Copy and setup the entrypoint script
-COPY docker-entrypoint.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
-
 # Expose the port your app runs on
 EXPOSE 3003
 
-# Set the entrypoint
-ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
-
 # Command to run the app
-CMD ["npm","run","start:dev"]
+CMD ["npm", "run", "start:prod"]
 
 
 # docker run -p host_port:container_port image_name
