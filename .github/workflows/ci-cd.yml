@@ -10,6 +10,7 @@ permissions:
   contents: read
   actions: read
   checks: write
+  packages: write
 
 env:
   NODE_VERSION: '18'
@@ -72,12 +73,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Build Docker Image
-        uses: ./.github/actions/docker-deploy
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image (no push)
+        uses: docker/build-push-action@v5
         with:
-          image-name: 'magarp0723/blog-service'
-          image-tag: ${{ github.ref_name }}-${{ github.sha }}
-          push-to-registry: 'false'
+          context: .
+          file: ./Dockerfile
+          push: false
+          tags: ghcr.io/${{ github.repository }}:${{ github.ref_name }}-${{ github.sha }}
 
   deploy-staging:
     name: 'Deploy to Staging'
@@ -90,14 +95,22 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Deploy to Staging
-        uses: ./.github/actions/docker-deploy
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
         with:
-          image-name: 'magarp0723/blog-service'
-          image-tag: 'staging'
-          push-to-registry: 'true'
-          registry-username: ${{ secrets.DOCKER_USERNAME }}
-          registry-password: ${{ secrets.DOCKER_PASSWORD }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image to staging
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}:staging
+            ghcr.io/${{ github.repository }}:staging-${{ github.sha }}
 
   deploy-production:
     name: 'Deploy to Production'
@@ -110,11 +123,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Deploy to Production
-        uses: ./.github/actions/docker-deploy
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
         with:
-          image-name: 'magarp0723/blog-service'
-          image-tag: 'latest'
-          push-to-registry: 'true'
-          registry-username: ${{ secrets.DOCKER_USERNAME }}
-          registry-password: ${{ secrets.DOCKER_PASSWORD }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image to production
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}:latest
+            ghcr.io/${{ github.repository }}:prod-${{ github.sha }}
