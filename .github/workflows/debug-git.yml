@@ -1,0 +1,52 @@
+name: 'Debug Workflow'
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  debug:
+    name: 'Debug Git Issues'
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Debug Environment
+        run: |
+          echo "=== Environment Information ==="
+          echo "Runner OS: $RUNNER_OS"
+          echo "GitHub Workspace: $GITHUB_WORKSPACE"
+          echo "GitHub Repository: $GITHUB_REPOSITORY"
+          echo "GitHub Actor: $GITHUB_ACTOR"
+          echo "GitHub Event: $GITHUB_EVENT_NAME"
+          echo "GitHub Ref: $GITHUB_REF"
+          echo "GitHub SHA: $GITHUB_SHA"
+          echo ""
+          echo "=== Git Information ==="
+          git --version
+          git config --list --show-origin
+          echo ""
+          echo "=== Working Directory ==="
+          pwd
+          ls -la
+          echo ""
+          echo "=== Git Status ==="
+          git status
+          echo ""
+          echo "=== Git Remote ==="
+          git remote -v
+          echo ""
+          echo "=== Git Branch ==="
+          git branch -a
+
+      - name: Test Git Operations
+        run: |
+          echo "=== Testing Git Operations ==="
+          git log --oneline -5 || echo "Git log failed"
+          git remote show origin || echo "Git remote show failed"
+          git ls-remote --heads origin || echo "Git ls-remote failed"

@@ -74,6 +74,17 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Debug Git and Repository
+        run: |
+          echo "Current directory: $(pwd)"
+          echo "Git version: $(git --version)"
+          echo "Repository: ${{ github.repository }}"
+          echo "Actor: ${{ github.actor }}"
+          echo "Event: ${{ github.event_name }}"
+          echo "Ref: ${{ github.ref }}"
 
       - name: Set lowercase image name
         id: image
@@ -90,6 +101,8 @@ jobs:
           file: ./Dockerfile
           push: false
           tags: ${{ env.REGISTRY }}/${{ steps.image.outputs.name }}:${{ github.ref_name }}-${{ github.sha }}
+          no-cache: false
+          pull: false
 
   deploy-staging:
     name: 'Deploy to Staging'
@@ -101,6 +114,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set lowercase image name
         id: image
@@ -134,6 +149,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set lowercase image name
         id: image
