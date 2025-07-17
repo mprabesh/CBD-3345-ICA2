@@ -75,20 +75,3 @@ jobs:
           test-results/    # 👈 JUnit XML test reports
           coverage/        # 👈 Coverage reports (HTML + LCOV)
         retention-days: 30  # Keep artifacts for 30 days
-
-    # Step 5: Additional coverage integration (optional enhancement)
-    - name: Upload coverage reports to Codecov
-      if: matrix.node-version == '20.x'
-      uses: codecov/codecov-action@v3
-      with:
-        file: ./coverage/lcov.info
-        flags: unittests
-        name: codecov-umbrella
-
-    # Step 6: PR coverage comments (optional enhancement)
-    - name: Comment coverage on PR
-      if: github.event_name == 'pull_request' && matrix.node-version == '20.x'
-      uses: romeovs/lcov-reporter-action@v0.3.1
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        lcov-file: ./coverage/lcov.info
