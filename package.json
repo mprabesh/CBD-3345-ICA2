@@ -4,7 +4,6 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "lint": "eslint . --ext .js",
     "test": "NODE_ENV=test jest --verbose --detectOpenHandles",
     "test:watch": "NODE_ENV=test jest --watch",
     "test:coverage": "NODE_ENV=test jest --coverage --verbose --detectOpenHandles",
@@ -24,7 +23,6 @@
   },
   "devDependencies": {
     "dotenv": "^16.3.1",
-    "eslint": "^8.46.0",
     "jest": "^29.6.2",
     "jest-junit": "^16.0.0",
     "nodemon": "^3.0.1",
