@@ -38,7 +38,9 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    # runs-on: ubuntu-latest
+    runs-on: self-hosted
+
     
     # Matrix strategy to test multiple Node.js versions for better compatibility
     strategy:
