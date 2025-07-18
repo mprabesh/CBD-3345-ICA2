@@ -51,8 +51,8 @@ jobs:
   # JOB 1: BUILD AND PUSH TO GITHUB PACKAGES (REQUIREMENT 2)
   # ==========================================================================
   build-and-push:
-    # runs-on: ubuntu-latest
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
+    # runs-on: self-hosted
 
     permissions:
       contents: read
