@@ -6,7 +6,7 @@ A Node.js blog service API built with Express.js, MongoDB, and JWT authenticatio
 
 - **User Authentication**: JWT-based authentication with bcrypt password hashing
 - **Blog Management**: CRUD operations for blog posts
-- **User Management**: User registration and profile management
+- **User Management**: User registration and profile management.
 - **Testing Suite**: Comprehensive test coverage with Jest and Supertest
 - **Dockerized**: Ready for containerized deployment
 - **CI/CD Ready**: Custom GitHub Actions for automated testing and deployment
